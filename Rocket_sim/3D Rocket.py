@@ -5,17 +5,20 @@ from scipy.interpolate import interp1d as int1d
 import numpy.linalg as la
 
 class Rocket: #Objeto Foguete
-    def __init__(self,dry_mass,prop_mass,diammeter,body_length,thrust_curve):
+    def __init__(self,dry_mass,prop_mass,diammeter,body_length,nosecone_type,fins_number,boattail,thrust_curve):
         self.dry_mass = dry_mass
         self.propellant_mass = prop_mass
         self.diammeter = diammeter
         self.body_length =body_length
+        self.nosecone_type = nosecone_type
+        self.fins_number = fins_number
+        self.boattail = boattail
         self.thrust_curve = thrust_curve
 
         # Motor
 
         Initial_Thrust = np.array([[0,0]])                                          # Inicio da queima com t = 0 e empuxo = 0 
-        Burn = np.loadtxt(self.thrust_curve,skiprows=11)                            # Curva de empuxo do arquivo
+        Burn = np.loadtxt(self.thrust_curve,skiprows=4)                            # Curva de empuxo do arquivo
         self.Thrust_curve = np.append(Initial_Thrust,Burn,axis=0)                   # Curva completa de empuxo
 
         shape = self.Thrust_curve.shape
@@ -72,8 +75,8 @@ def Rocket_attitude(v,t):
 
 def Drag(v,t):
 
-    Cd = Vesper.Cd
-    S = math.pi * ((Vesper.diammeter * 0.5)**2)
+    Cd = The_Rocket.Cd
+    S = math.pi * ((The_Rocket.diammeter * 0.5)**2)
     rho = 1.225
     # Versor do arrasto
     Attitude = Rocket_attitude(v,t)
@@ -85,45 +88,36 @@ def Drag(v,t):
 def Thrust(v,t):
     
     Attitude = Rocket_attitude(v,t)
-    Thrust = Attitude * Vesper.Thrust(t)
+    Thrust = Attitude * The_Rocket.Thrust(t)
     
     return Thrust
 
 def acceleration(t,v):
-    Mass = Vesper.mass(t)
-    if t>=0.05: # Foguete no solo 
+    Mass = The_Rocket.mass(t)
+    if t>=0.05:                                                           # Foguete no solo 
         g = np.array([0,0,-9.81])
-    else:       # Motor gera empuxo
+    else:                                                                 # Motor gera empuxo
         g = np.array([0,0,0])
 
     Wind_speed = 0
     Wind_direction = 0
+    Total_Drag= Drag(v,t)                                                  # Drag Vector
+    Wind_Force = Wind(Wind_speed,Wind_direction)                           # Wind Force 
 
+    Engine_Thrust = Thrust(v,t)                                           # Vetor empuxo
+    a = (Engine_Thrust/Mass) + (Total_Drag/Mass) + g + (Wind_Force/Mass)  # Vetor aceleração total
 
-    total_burn = Vesper.Total_burn_time
-    Total_Drag= Drag(v,t)
-    Wind_Force = Wind(Wind_speed,Wind_direction) # Wind Force 
-    
-    if t < total_burn:
-        Engine_Thrust = Thrust(v,t) 
-        a = (Engine_Thrust/Mass) + (Total_Drag/Mass) + g + (Wind_Force/Mass)
-    
-    #elif t>5 and t < 5.4:
-        #Engine_Thrust = Thrust(v,t-5)
-        #a = (Engine_Thrust/Mass) + (Total_Drag/Mass) + g + (Wind_Force/Mass)
-    else:
-        a = (Total_Drag/Mass) + g + (Wind_Force/Mass)
     return a
 
-def RK4(f,v0,t0,tf,dt): # Metodo RungeKutta
+def RK4(f,v0,t0,tf,dt):                                                   # Metodo RungeKutta
 
-    t = np.arange(t0,tf,dt) # vetor tempo de t0 até tf com intervalos de tempo dt
+    t = np.arange(t0,tf,dt)                                               # vetor tempo de t0 até tf com intervalos de tempo dt
     
 
-    nt = t.size # numero de tempos
-    n_row,n_col = v0.shape # numero de variaveis em x
+    nt = t.size                                                           # numero de tempos
+    n_row,n_col = v0.shape                                                # numero de variaveis em x
     v = np.zeros((n_row,nt))
-    x = np.zeros((n_row,nt)) # Trajetoria 
+    x = np.zeros((n_row,nt))                                              # Trajetoria 
     
 
 
@@ -138,16 +132,16 @@ def RK4(f,v0,t0,tf,dt): # Metodo RungeKutta
         k4 = dt * f(t[k] + dt ,v[:,k] + k3)
 
 
-        dv = (k1 + (2*k2) + (2*k3) + (k4))/6 # diferencial de x
+        dv = (k1 + (2*k2) + (2*k3) + (k4))/6                            # diferencial de x
         
 
-        v[:,k+1] = v[:,k] + dv # vetor de estados no momento desejado 
+        v[:,k+1] = v[:,k] + dv                                          # vetor de estados no momento desejado 
 
         dx = v[:,k]*dt
 
-        x[:,k+1] = x[:,k] + dx # vetor de espaços
+        x[:,k+1] = x[:,k] + dx                                          # vetor de espaços
         
-        if x[2,k+1]<0: #Chegou no chão
+        if x[2,k+1]<0:                                                  #Chegou no chão
             break
 
 
@@ -161,8 +155,12 @@ Dry_Mass = 2.25                                                             # Ma
 Prop_mass = 0.25                                                            # Massa do propelente 
 diammeter = 0.085                                                           # Diametro do bodytube
 body_length = 1074                                                          # Comprimento do bodytube
-Vesper = Rocket(Dry_Mass ,Prop_mass, diammeter, body_length, Trhust_Curve)
-Vesper.Cd = 0.41
+nosecone_type = 4                                                           # Tipo de Nosecone
+fins_number = 4                                                             # Numero de aletas
+boattail = False                                                            # Boattail presente ou ausente
+
+The_Rocket = Rocket(Dry_Mass ,Prop_mass, diammeter, body_length, nosecone_type,fins_number,boattail, Trhust_Curve)
+The_Rocket.Cd = 0.41
 
 #################### SIM CONFIG #########################
 
