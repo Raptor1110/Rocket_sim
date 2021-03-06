@@ -1,0 +1,19 @@
+; Vesper 1.1 RASP.ENG file made from EPTA published data
+; File produced, 2019
+; The total impulse, peak thrust, average thrust and burn time are
+; the same as the averaged static test data on the NAR web site in
+; the certification file. The curve drawn with these data points is as
+; close to the certification curve as can be with such a limited
+; number of points (32) allowed with wRASP up to v1.6.
+; @File: Vesper.eng, @Pts-I: 8, @Pts-O: 8, @Sm: 0, @CO: 5%
+; @TI: 280.963, @TIa: 280.576, @TIe: 0.0%, @ThMax: 1112.5, @ThAvg: 755.278, @Tb: 0.372
+; Exported using ThrustCurveTool, www.ThrustGear.com
+H755 38 300 0, 0.225 0.749788 EPTA
+  0.05       200.0
+  0.1        1112.5
+  0.15       1112.5
+  0.2        1112.0
+  0.25       1000.0
+  0.3        890.0
+  0.35       200.0
+  0.4        0.0
